@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AI Email Agent Logs</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 32px;
+            background: #f5f7fb;
+            color: #1f2937;
+            font-family: "Segoe UI", Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            margin: 0 0 10px;
+            font-size: 30px;
+        }
+
+        p {
+            margin: 0 0 24px;
+            color: #6b7280;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+            vertical-align: top;
+            font-size: 14px;
+        }
+
+        th {
+            background: #eef4ff;
+            color: #1d4ed8;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        tr:hover td {
+            background: #f9fafb;
+        }
+
+        .empty {
+            padding: 24px;
+            color: #6b7280;
+        }
+
+        .message-id {
+            max-width: 260px;
+            word-break: break-word;
+        }
+
+        .status {
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Processed Email Logs</h1>
+        <p>Recent Gmail messages handled by the AI email agent.</p>
+
+        <div class="card">
+            {% if logs %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Gmail Message ID</th>
+                        <th>Sender</th>
+                        <th>Subject</th>
+                        <th>Status</th>
+                        <th>Created At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td class="message-id">{{ log.gmail_message_id }}</td>
+                        <td>{{ log.sender }}</td>
+                        <td>{{ log.subject }}</td>
+                        <td class="status">{{ log.status }}</td>
+                        <td>{{ log.created_at }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty">No processed logs yet.</div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

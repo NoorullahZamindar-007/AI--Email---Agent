@@ -1,0 +1,185 @@
+Big Picture
+
+This project is an automated email assistant with a web dashboard.
+
+It has two main parts:
+
+1. a background worker that reads emails, asks AI to write replies, and saves Gmail drafts  
+2. a Flask web app that shows what happened in a browser
+
+So the system is not just “Flask” and not just “AI.” It is a small workflow application.
+
+1. Data Flow: Gmail -> Grok -> Gmail Draft -> SQLite
+
+The full data flow is:
+
+1. The app connects to Gmail using [gmail_service.py](c:/Users/nooru/OneDrive/Documents/agentic%20ai/ai%20email%20agent/gmail_service.py).
+2. It searches for unread inbox emails with a Gmail query.
+3. For each message, it fetches the full Gmail message JSON.
+4. It parses useful fields:
+   - sender
+   - subject
+   - thread ID
+   - message ID
+   - references
+   - email body
+5. The email body is sent to Grok using [grok_service.py](c:/Users/nooru/OneDrive/Documents/agentic%20ai/ai%20email%20agent/grok_service.py).
+6. Grok generates a professional reply body.
+7. The app builds a proper reply email and creates a Gmail draft in the same thread through [gmail_service.py](c:/Users/nooru/OneDrive/Documents/agentic%20ai/ai%20email%20agent/gmail_service.py).
+8. The app saves a log row into SQLite through [db.py](c:/Users/nooru/OneDrive/Documents/agentic%20ai/ai%20email%20agent/db.py).
+9. Flask reads those logs and displays them on the dashboard in [app.py](c:/Users/nooru/OneDrive/Documents/agentic%20ai/ai%20email%20agent/app.py) and [logs.html](c:/Users/nooru/OneDrive/Documents/agentic%20ai/ai%20email%20agent/templates/logs.html).
+
+A simple way to say it:
+
+- Gmail provides the input
+- Grok creates the reply
+- Gmail stores the output as a draft
+- SQLite stores the record of what happened
+- Flask shows the results to the user
+
+2. Where API Integration Happens
+
+There are two API integrations in this project.
+
+Gmail API integration happens in [gmail_service.py](c:/Users/nooru/OneDrive/Documents/agentic%20ai/ai%20email%20agent/gmail_service.py).
+
+That file handles:
+- OAuth login
+- token reuse
+- listing unread emails
+- fetching full messages
+- creating reply drafts
+
+Grok API integration happens in [grok_service.py](c:/Users/nooru/OneDrive/Documents/agentic%20ai/ai%20email%20agent/grok_service.py).
+
+That file handles:
+- reading the API key from environment variables
+- creating the client
+- sending the email content to the model
+- returning the generated reply
+
+So the external systems are isolated into service files. That is a good design choice because it keeps outside integrations separate from the main workflow logic.
+
+3. Where Automation Logic Happens
+
+The automation logic is mainly in [scheduler.py](c:/Users/nooru/OneDrive/Documents/agentic%20ai/ai%20email%20agent/scheduler.py).
+
+That file contains `process_inbox()`, which is the core workflow function.
+
+This is where the project “thinks” in steps:
+
+1. connect to Gmail  
+2. get unread messages  
+3. skip already processed ones  
+4. extract email content  
+5. ask Grok for a reply  
+6. create a Gmail draft  
+7. save the log in SQLite  
+
+This is the heart of the whole project.
+
+Then [app.py](c:/Users/nooru/OneDrive/Documents/agentic%20ai/ai%20email%20agent/app.py) uses APScheduler to call `process_inbox()` every few minutes automatically.
+
+So:
+
+- `scheduler.py` contains the business workflow
+- `app.py` contains the timing and web interface
+
+4. Where JSON Handling Happens
+
+JSON handling happens in a few places.
+
+In [gmail_service.py](c:/Users/nooru/OneDrive/Documents/agentic%20ai/ai%20email%20agent/gmail_service.py):
+- Gmail API returns message data as JSON-like Python dictionaries
+- the code reads keys like `payload`, `headers`, `parts`, `snippet`, and `threadId`
+- it parses nested structures to extract plain text content
+
+In [grok_service.py](c:/Users/nooru/OneDrive/Documents/agentic%20ai/ai%20email%20agent/grok_service.py):
+- the request is sent in structured message format
+- the response is read from objects that represent the API response structure
+- the code extracts the reply text from the first response choice
+
+In [db.py](c:/Users/nooru/OneDrive/Documents/agentic%20ai/ai%20email%20agent/db.py):
+- log rows are converted into plain Python dictionaries for easy use in Flask templates
+
+So even though you do not manually write raw JSON files, the project works with API JSON data all the time.
+
+5. Where AI Usage Happens
+
+The actual AI usage happens in [grok_service.py](c:/Users/nooru/OneDrive/Documents/agentic%20ai/ai%20email%20agent/grok_service.py).
+
+That file is responsible for:
+- defining the prompt
+- telling the AI to be professional and concise
+- telling the AI not to hallucinate
+- telling the AI to ask for clarification if needed
+- returning only the reply body
+
+The AI is not spread everywhere in the app. It is kept in one place, which is good architecture.
+
+Then [scheduler.py](c:/Users/nooru/OneDrive/Documents/agentic%20ai/ai%20email%20agent/scheduler.py) calls that AI function as one step in a larger pipeline.
+
+So AI is a component inside the workflow, not the whole app.
+
+6. How Flask Fits Into The Whole System
+
+Flask is the presentation layer and app container.
+
+In [app.py](c:/Users/nooru/OneDrive/Documents/agentic%20ai/ai%20email%20agent/app.py), Flask does three things:
+
+1. starts the web server  
+2. starts the background scheduler  
+3. provides routes to view logs and trigger processing manually  
+
+The dashboard route `/`:
+- reads logs from SQLite
+- renders them in HTML
+
+The `/run-now` route:
+- manually triggers inbox processing
+- redirects back to the dashboard
+
+So Flask is not doing Gmail logic or AI logic directly. It is hosting the app and exposing it through web routes.
+
+A simple explanation is:
+
+- Flask is the shell around the system
+- the scheduler runs the jobs
+- the services talk to external APIs
+- SQLite stores history
+- the dashboard lets a human monitor the workflow
+
+7. How To Explain It In An Interview
+
+A strong beginner-friendly interview explanation would be:
+
+“I built a Flask-based email automation system that connects Gmail and an AI model. A scheduled background job checks unread Gmail messages, extracts the sender, subject, and message body, sends the content to Grok to generate a professional reply, and then saves the reply as a Gmail draft in the same thread instead of sending it automatically. Each processed email is logged in SQLite, and a Flask dashboard displays the logs and lets me trigger the workflow manually.”
+
+If they ask about architecture, say:
+
+“I separated the project into layers. `gmail_service.py` handles Gmail API integration, `grok_service.py` handles AI integration, `scheduler.py` contains the workflow logic, `db.py` manages SQLite logging, and `app.py` provides the Flask dashboard and starts APScheduler.”
+
+If they ask why this is a good project, say:
+
+“It combines web development, API integration, background jobs, OAuth authentication, database logging, and AI-generated content in one practical workflow. It is a real automation project, not just a demo page.”
+
+If they ask about safety, say:
+
+“I chose to create drafts instead of auto-sending emails, so the system stays practical but safer for real-world use.”
+
+If they ask about technical learning, say:
+
+“I learned how to work with nested Gmail message payloads, OAuth token handling, threaded email replies using headers like `In-Reply-To` and `References`, and how to structure an automation pipeline cleanly.”
+
+Short Summary
+
+This project is best understood as a pipeline:
+
+- read email from Gmail
+- extract useful content
+- generate reply with Grok
+- save reply as Gmail draft
+- log the action in SQLite
+- show results in Flask
+
+That is the core story of the whole system.
