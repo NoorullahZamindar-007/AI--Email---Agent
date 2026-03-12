@@ -1,3 +1,6 @@
+# AI--Email---Agent
+AI -Email - Agent
+
 # ai_email_agent
 
 `ai_email_agent` is a beginner-friendly Flask project that checks unread Gmail messages, sends email content to Gemini to generate a reply, saves the reply as a Gmail draft, stores logs in SQLite, and shows those logs in a small dashboard.
