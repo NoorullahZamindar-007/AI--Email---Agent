@@ -7,7 +7,7 @@ AI -Email - Agent
 
 The project is designed to be built step by step. It does not auto-send emails. It creates drafts so you can review them safely in Gmail.
 
-## 1. What This Project Does  
+## 1. What This Project Does   
 
 This app automates part of your email workflow:
 
