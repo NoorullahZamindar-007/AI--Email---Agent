@@ -12,7 +12,7 @@ The project is designed to be built step by step. It does not auto-send emails. 
 This app automates part of your email workflow:
  
 1. reads unread emails from your Gmail inbox 
-2. extracts sender, subject, and email body
+2. extracts sender, subject, and email body 
 3. asks Gemini to write a professional reply
 4. creates a Gmail draft reply in the same thread
 5. saves the result in a local SQLite database 
